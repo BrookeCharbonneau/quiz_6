@@ -3,11 +3,11 @@ library(apaTables)
 library(MBESS)
 
 #load data
-analytic.data <- read_csv("mmr_practice_data.csv")
+analytic.data <- read_csv("mmr_labquiz_data.csv")
 glimpse(analytic.data)
 
 
-apa.cor.table(analytic.data, table.number = 1)
+apa.cor.table(analytic.data, filename="Table 1.doc", table.number = 1)
 
 
 ##Do anxiety and preparation interact to predict exam scores?
@@ -16,6 +16,11 @@ apa.cor.table(analytic.data, table.number = 1)
 analytic.data <- analytic.data %>% select(exam,anxiety,preparation)
 #keep complete cases only, list-wise deletion of cases
 analytic.data <- na.omit(analytic.data)
+
+
+#make sure data isn't curvilinear, so analysis makes sense
+psych::pairs.panels(as.data.frame(analytic.data))
+#doesn't look super cuvy, proceed
 
 
 #Center variables
@@ -32,18 +37,9 @@ interaction.regression <- lm(exam ~ x.centered + z.centered + I(x.centered*z.cen
 summary(interaction.regression)
 
 #regression table
-apa.reg.table(interaction.regression, table.number = 2)
-#although sr2 is significant, its CI overlaps with 0 - inconsistent messaging = small effect
-#explore further
+apa.reg.table(interaction.regression, filename="Table 2.doc", table.number = 2)
+#sr2 is significant and CI does not overlap 0
 
-
-#OR can use block approach
-block1 <- lm(exam ~ x.centered + z.centered,data=analytic.data, na.action=na.exclude)
-block2 <- lm(exam ~ x.centered + z.centered + I(x.centered*z.centered), data=analytic.data, na.action=na.exclude)
-apa.reg.table(block1, block2)
-#then look at delta R2 - will give same value as reg table approach
-#although delta R2 is significant, its CI overlaps with 0 - inconsistent messaging = small effect
-#explore further
 
 
 ##make the graph - getting the lines on the surface (+1 SD)
@@ -90,9 +86,10 @@ summary(simple.slope.minus.1SD)
 ##  Figure 1: 3D Plot
 
 # See: summary(interaction.regression) for numbers to input here
+summary(interaction.regression)
 library(MBESS)
 sd.x <- sd(analytic.data$x.centered, na.rm=TRUE)
-intr.plot(b.0=47.04877,b.x=15.011113,b.z=9.45285,b.xz=22.60574,
+intr.plot(b.0= 49.2104,b.x=15.2537,b.z=9.5471,b.xz=6.0481,
           x.min=-1*sd.x,x.max=1*sd.x,z.min=-1*sd.z,z.max=1*sd.z,
           xlab="Anxiety Centered",zlab="Preparation Centered",ylab="Exam Score",
           expand=1,hor.angle=60,gray.scale=TRUE, line.wd=4,zlim=c(0,100)) 
@@ -150,8 +147,8 @@ my.plot <- my.plot + theme_classic(18)
 
 #labels
 my.plot <- my.plot + labs(x="Anxiety (mean centered)", y="Exam Grade")
-my.plot <- my.plot+annotate("text", x = -1, y = 68.5, label = "+1 SD Preparation")
-my.plot <- my.plot+annotate("text", x = -1, y =43.5, label = "-1 SD Preparation")
+my.plot <- my.plot+annotate("text", x = 0, y = 68.5, label = "+1 SD Preparation")
+my.plot <- my.plot+annotate("text", x = 0, y =32.5, label = "-1 SD Preparation")
 
 #the SD of Anxiety (see Table 1 is 2.00 so -1SD to +1SD is -2 to 2)
 my.plot <- my.plot + coord_cartesian(xlim=c(-2,2),ylim=c(0,100))
